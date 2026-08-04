@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FaceAttend — Smart Attendance System</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Login Overlay ──────────────────────────────────────────────────── -->
+<div id="login-overlay" class="login-overlay">
+  <div class="login-card">
+    <div class="login-logo"><i class="fa fa-camera-retro"></i> FaceAttend</div>
+    <h2 class="login-title">Sign In</h2>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div id="login-error" class="status-msg error" style="display:none"></div>
+    <button class="btn btn-primary" id="login-btn" style="width:100%;margin-top:8px">
+      <i class="fa fa-right-to-bracket"></i> Sign In
+    </button>
+    <p class="login-hint">Default: admin / admin123</p>
+  </div>
+</div>
+
+<!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <i class="fa fa-camera-retro logo-icon"></i>
+    <span class="logo-text">FaceAttend</span>
+  </div>
+  <ul class="nav-links">
+    <li class="active" data-page="dashboard"><i class="fa fa-gauge-high"></i><span>Dashboard</span></li>
+    <li data-page="register"><i class="fa fa-user-plus"></i><span>Register Student</span></li>
+    <li data-page="mark"><i class="fa fa-camera"></i><span>Mark Attendance</span></li>
+    <li data-page="records"><i class="fa fa-table-list"></i><span>View Records</span></li>
+    <li data-page="students"><i class="fa fa-users"></i><span>Students</span></li>
+    <li data-page="analytics"><i class="fa fa-chart-line"></i><span>Analytics</span></li>
+    <li data-page="classes"><i class="fa fa-building-columns"></i><span>Classes</span></li>
+    <li data-page="audit"><i class="fa fa-scroll"></i><span>Audit Log</span></li>
+  </ul>
+  <div class="sidebar-footer">
+    <div id="sidebar-user" class="sidebar-user"></div>
+    <button class="btn btn-outline btn-sm" id="logout-btn" style="width:100%;margin-top:8px">
+      <i class="fa fa-right-from-bracket"></i> Logout
+    </button>
+  </div>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────────────────────── -->
+<div class="main-content" id="main-content">
+
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn"><i class="fa fa-bars"></i></button>
+    <h2 class="page-title" id="page-title">Dashboard</h2>
+    <div class="topbar-right">
+      <span id="clock" class="clock"></span>
+      <span class="badge-date" id="today-date"></span>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+        <i class="fa fa-moon" id="theme-icon"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-container">
+
+    <!-- ══ Dashboard ══════════════════════════════════════════════════ -->
+    <section class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon"><i class="fa fa-users"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-students">—</span>
+            <span class="stat-label">Total Students</span>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="fa fa-circle-check"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-today">—</span>
+            <span class="stat-label">Present Today</span>
+          </div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon"><i class="fa fa-circle-xmark"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-absent">—</span>
+            <span class="stat-label">Absent Today</span>
+          </div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon"><i class="fa fa-calendar-days"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-days">—</span>
+            <span class="stat-label">Days Tracked</span>
+          </div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon"><i class="fa fa-clipboard-list"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-total">—</span>
+            <span class="stat-label">Total Records</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-panels">
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-circle-check"></i> Present Today</div>
+          <div class="panel-body" id="today-list"><div class="empty-msg">Loading...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-circle-xmark"></i> Absent Today</div>
+          <div class="panel-body" id="absent-list"><div class="empty-msg">Loading...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-clock-rotate-left"></i> Recent Activity</div>
+          <div class="panel-body" id="activity-feed"><div class="empty-msg">Loading...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-circle-info"></i> Quick Start</div>
+          <div class="panel-body quick-start">
+            <div class="qs-step"><span class="qs-num">1</span><div><strong>Register Students</strong><p>Capture 5 face photos for best accuracy.</p></div></div>
+            <div class="qs-step"><span class="qs-num">2</span><div><strong>Mark Attendance</strong><p>Use auto-scan or manual scan with live face box.</p></div></div>
+            <div class="qs-step"><span class="qs-num">3</span><div><strong>View Analytics</strong><p>Charts, trends, and per-student % in Analytics.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Register Student ════════════════════════════════════════════ -->
+    <section class="page" id="page-register">
+      <div class="form-card">
+        <h3 class="form-title"><i class="fa fa-user-plus"></i> Register New Student</h3>
+        <div class="form-body">
+          <div class="form-left">
+            <div class="field">
+              <label>Student Name</label>
+              <input type="text" id="reg-name" placeholder="e.g. Aakash Sharma" />
+            </div>
+            <div class="field">
+              <label>Roll Number</label>
+              <input type="text" id="reg-roll" placeholder="e.g. CS2024001" />
+            </div>
+            <div class="field">
+              <label>Class / Section</label>
+              <select id="reg-class" class="field-select">
+                <option value="">— None —</option>
+              </select>
+            </div>
+
+            <!-- Multi-photo progress -->
+            <div class="photo-progress">
+              <div class="photo-progress-label">
+                Photos captured: <span id="photo-count">0</span> / 5
+                <span class="hint">(minimum 1, recommended 5)</span>
+              </div>
+              <div class="photo-thumbs" id="photo-thumbs"></div>
+            </div>
+
+            <div class="camera-controls">
+              <button class="btn btn-primary" id="start-reg-cam"><i class="fa fa-camera"></i> Start Camera</button>
+              <button class="btn btn-secondary" id="capture-btn" disabled><i class="fa fa-circle-dot"></i> Capture</button>
+              <button class="btn btn-outline" id="reset-photos-btn" disabled><i class="fa fa-rotate-left"></i> Reset</button>
+            </div>
+            <div id="reg-status" class="status-msg"></div>
+            <button class="btn btn-success" id="register-btn" disabled><i class="fa fa-check"></i> Register Student</button>
+          </div>
+          <div class="form-right">
+            <div class="cam-box" id="reg-cam-box">
+              <div class="cam-placeholder" id="reg-cam-placeholder">
+                <i class="fa fa-camera"></i>
+                <p>Camera preview</p>
+              </div>
+              <video id="reg-video" autoplay playsinline style="display:none"></video>
+              <canvas id="reg-canvas" style="display:none"></canvas>
+              <canvas id="reg-overlay" class="cam-overlay-canvas" style="display:none"></canvas>
+              <img id="reg-preview" style="display:none" alt="Captured photo"/>
+            </div>
+            <div id="liveness-hint" class="liveness-hint" style="display:none">
+              <i class="fa fa-eye"></i> Eyes detected — liveness OK
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Mark Attendance ════════════════════════════════════════════ -->
+    <section class="page" id="page-mark">
+      <div class="mark-card">
+        <h3 class="form-title"><i class="fa fa-camera"></i> Mark Attendance</h3>
+        <div class="mark-body">
+          <div style="flex:1">
+            <div class="cam-box large" id="mark-cam-box" style="position:relative">
+              <div class="cam-placeholder" id="mark-cam-placeholder">
+                <i class="fa fa-camera"></i>
+                <p>Click Start Camera to begin</p>
+              </div>
+              <video id="mark-video" autoplay playsinline style="display:none"></video>
+              <canvas id="mark-overlay" class="cam-overlay-canvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+              <canvas id="mark-canvas" style="display:none"></canvas>
+            </div>
+            <!-- Confidence meter -->
+            <div id="conf-meter" class="conf-meter" style="display:none">
+              <span class="conf-label">Confidence</span>
+              <div class="conf-bar-wrap">
+                <div class="conf-bar" id="conf-bar"></div>
+              </div>
+              <span class="conf-pct" id="conf-pct">—</span>
+            </div>
+          </div>
+          <div class="mark-controls">
+            <div class="field">
+              <label>Subject (optional)</label>
+              <select id="mark-subject" class="field-select">
+                <option value="">— Any —</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="start-mark-cam"><i class="fa fa-play"></i> Start Camera</button>
+            <button class="btn btn-danger" id="stop-mark-cam" style="display:none"><i class="fa fa-stop"></i> Stop</button>
+            <div class="auto-scan-row">
+              <label class="toggle-label">
+                <input type="checkbox" id="auto-scan" />
+                <span class="toggle-switch"></span>
+                Auto-Scan (every 3s)
+              </label>
+            </div>
+            <button class="btn btn-success" id="scan-once-btn" disabled><i class="fa fa-magnifying-glass"></i> Scan Now</button>
+
+            <!-- Manual override -->
+            <div class="manual-mark-box">
+              <div class="panel-header" style="border-radius:8px 8px 0 0"><i class="fa fa-pen"></i> Manual Mark</div>
+              <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+                <input type="text" id="manual-roll" class="field-input" placeholder="Roll number" />
+                <input type="date" id="manual-date" class="field-input" />
+                <button class="btn btn-secondary btn-sm" id="manual-mark-btn"><i class="fa fa-check"></i> Mark Present</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="mark-result" class="mark-result hidden"></div>
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-header"><i class="fa fa-list"></i> Marked Today</div>
+          <div class="panel-body" id="mark-today-list"><div class="empty-msg">None yet</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Records ════════════════════════════════════════════════════ -->
+    <section class="page" id="page-records">
+      <div class="records-card">
+        <h3 class="form-title"><i class="fa fa-table-list"></i> Attendance Records</h3>
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Date</label>
+            <input type="date" id="filter-date" />
+            <button class="btn btn-primary btn-sm" id="filter-btn"><i class="fa fa-filter"></i> Filter</button>
+          </div>
+          <div class="filter-group">
+            <label>Roll No.</label>
+            <input type="text" id="filter-roll" placeholder="Roll number" />
+            <button class="btn btn-secondary btn-sm" id="filter-roll-btn"><i class="fa fa-search"></i> Search</button>
+          </div>
+          <button class="btn btn-outline btn-sm" id="show-all-btn"><i class="fa fa-list"></i> All</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-outline btn-sm" id="export-csv-btn"><i class="fa fa-file-csv"></i> CSV</button>
+          <button class="btn btn-outline btn-sm" id="export-excel-btn"><i class="fa fa-file-excel"></i> Excel</button>
+          <button class="btn btn-outline btn-sm" id="export-pdf-btn"><i class="fa fa-file-pdf"></i> PDF</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="att-table" id="att-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Roll No.</th><th>Date</th><th>Time</th><th>Method</th><th>Subject</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="att-tbody">
+              <tr><td colspan="8" class="empty-row">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+        <div class="table-footer">
+          <span id="rec-count">0 records</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Students ═══════════════════════════════════════════════════ -->
+    <section class="page" id="page-students">
+      <div class="records-card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <h3 class="form-title" style="margin:0"><i class="fa fa-users"></i> Registered Students</h3>
+          <input type="text" id="student-search" class="field-input" placeholder="Search name or roll…" style="max-width:220px;flex:1" />
+          <select id="student-class-filter" class="field-select" style="max-width:180px">
+            <option value="">All Classes</option>
+          </select>
+        </div>
+        <div class="students-grid" id="students-grid">
+          <div class="empty-msg">Loading...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Analytics ══════════════════════════════════════════════════ -->
+    <section class="page" id="page-analytics">
+      <div class="analytics-grid">
+        <div class="panel chart-panel">
+          <div class="panel-header"><i class="fa fa-chart-bar"></i> Daily Attendance (Last 30 Days)</div>
+          <div class="panel-body chart-body">
+            <canvas id="chart-trend"></canvas>
+          </div>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-header"><i class="fa fa-chart-pie"></i> Today's Presence</div>
+          <div class="panel-body chart-body">
+            <canvas id="chart-pie"></canvas>
+          </div>
+        </div>
+        <div class="panel chart-panel wide-panel">
+          <div class="panel-header"><i class="fa fa-percent"></i> Student Attendance %</div>
+          <div class="panel-body" style="max-height:400px;overflow-y:auto" id="att-pct-list">
+            <div class="empty-msg">Loading...</div>
+          </div>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-header"><i class="fa fa-calendar-week"></i> Weekly Heatmap</div>
+          <div class="panel-body chart-body">
+            <canvas id="chart-heatmap"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Classes ════════════════════════════════════════════════════ -->
+    <section class="page" id="page-classes">
+      <div class="two-col-layout">
+
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-building-columns"></i> Classes</div>
+          <div class="panel-body">
+            <div id="admin-only-class" style="display:none">
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <input type="text" id="new-class-name" class="field-input" placeholder="Class name (e.g. 11-A)" style="flex:1"/>
+                <input type="text" id="new-class-section" class="field-input" placeholder="Section" style="width:90px"/>
+                <button class="btn btn-primary btn-sm" id="add-class-btn"><i class="fa fa-plus"></i> Add</button>
+              </div>
+            </div>
+            <div id="classes-list"><div class="empty-msg">Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><i class="fa fa-book"></i> Subjects</div>
+          <div class="panel-body">
+            <div id="admin-only-subject" style="display:none">
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <input type="text" id="new-subject-name" class="field-input" placeholder="Subject name" style="flex:1"/>
+                <select id="new-subject-class" class="field-select" style="width:130px">
+                  <option value="">All classes</option>
+                </select>
+                <button class="btn btn-primary btn-sm" id="add-subject-btn"><i class="fa fa-plus"></i> Add</button>
+              </div>
+            </div>
+            <div id="subjects-list"><div class="empty-msg">Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="panel" id="users-panel" style="display:none">
+          <div class="panel-header"><i class="fa fa-user-shield"></i> User Management</div>
+          <div class="panel-body">
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+              <input type="text" id="new-user-name" class="field-input" placeholder="Username" style="flex:1"/>
+              <input type="password" id="new-user-pw" class="field-input" placeholder="Password" style="flex:1"/>
+              <select id="new-user-role" class="field-select" style="width:110px">
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button class="btn btn-primary btn-sm" id="add-user-btn"><i class="fa fa-plus"></i> Add</button>
+            </div>
+            <div id="users-list"><div class="empty-msg">Loading...</div></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ Audit Log ══════════════════════════════════════════════════ -->
+    <section class="page" id="page-audit">
+      <div class="records-card">
+        <h3 class="form-title"><i class="fa fa-scroll"></i> Audit Log</h3>
+        <div class="table-wrapper">
+          <table class="att-table">
+            <thead>
+              <tr><th>#</th><th>Action</th><th>Detail</th><th>By</th><th>Timestamp</th></tr>
+            </thead>
+            <tbody id="audit-tbody">
+              <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- end page-container -->
+</div><!-- end main-content -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
